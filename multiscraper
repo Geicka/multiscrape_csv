@@ -1,0 +1,75 @@
+from bs4 import BeautifulSoup as bs
+import requests
+from csv_sum import NLP_summarize as nlpsum
+import csv
+
+def multiscrape():
+    Url1 = "https://clinicaltrials.gov/ct2/show/study/NCT04710615?draw=2"
+    Url2 = "https://clinicaltrials.gov/ct2/show/NCT04847089?draw=2&rank=2"
+    Url3 = "https://clinicaltrials.gov/ct2/show/NCT04847063?draw=2&rank=4"
+    Url4 = "https://clinicaltrials.gov/ct2/show/NCT04847050?draw=2&rank=5"
+    Url5 = "https://clinicaltrials.gov/ct2/show/NCT04847037?draw=2&rank=6"
+    Url6 = "https://clinicaltrials.gov/ct2/show/NCT04847011?draw=2&rank=8"
+    Url7 = "https://clinicaltrials.gov/ct2/show/NCT04846998?draw=2&rank=9"
+    Url8 = "https://clinicaltrials.gov/ct2/show/NCT04846985?draw=2&rank=10"
+    Url9 = "https://clinicaltrials.gov/ct2/show/NCT04846946?draw=2&rank=13"
+    Url10 = "https://clinicaltrials.gov/ct2/show/NCT04846933?draw=2&rank=14"
+    Url11 = "https://clinicaltrials.gov/ct2/show/NCT04846907?draw=2&rank=16"
+    Url12 = "https://clinicaltrials.gov/ct2/show/NCT04846855?draw=2&rank=20"
+    Url13 = "https://clinicaltrials.gov/ct2/show/NCT04846842?draw=2&rank=21"
+    Url14 = "https://clinicaltrials.gov/ct2/show/NCT04846816?draw=2&rank=23"
+    Url15 = "https://clinicaltrials.gov/ct2/show/NCT04846803?draw=2&rank=24"
+
+
+    Urls = [Url1, Url2, Url3, Url4, Url5, Url6, Url7, Url8, Url9, Url10, Url11, Url12, Url13, Url14, Url15]
+    summ = []
+    nlpsumm = []
+    detsum = []
+    nlpdetsum = []
+    nctids = [
+        'NCT04710615',
+        'NCT04847089',
+        'NCT04847063',
+        'NCT04847050',
+        'NCT04847037',
+        'NCT04847011',
+        'NCT04846998',
+        'NCT04846985',
+        'NCT04846946',
+        'NCT04846933',
+        'NCT04846907',
+        'NCT04846855',
+        'NCT04846842',
+        'NCT04846816',
+        'NCT04846803'
+    ]
+    for url in range(len(Urls)):
+        print('.', end='')
+        results = requests.get(Urls[url])
+        soup = bs(results.content, 'html.parser')
+        details = soup.find_all('div', attrs={'class_', 'tr-indent2'})
+        for index, detail in enumerate(details):
+            if index == 1:
+                summary = detail.find_all('div', attrs={'class_', 'ct-body3 tr-indent2'})
+                if summary is not None:
+                    summ.append(summary[0].get_text())
+                    detsum.append(summary[1].get_text())
+                    nlpsumm.append(nlpsum(summary[0].get_text()))
+                    nlpdetsum.append(nlpsum(summary[1].get_text()))                    
+                
+                else:
+                    pass
+            else:
+                pass      
+    with open('csv_file.csv', mode='w', newline='') as csv_file:
+        fieldnames = ['NCTID', 'short description', 'detailed description', 'summary of short description', 'summary of detailed description']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for i in range(0,15):
+            writer.writerow({'NCTID': nctids[i], 'short description': summ[i], 'detailed description': detsum[i], 'summary of short description': nlpsum(summ[i]), 'summary of detailed description': nlpsum(detsum[i])})
+    
+    
+
+
+if __name__ == "__main__":
+    multiscrape()
