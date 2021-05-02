@@ -1,32 +1,41 @@
 from bs4 import BeautifulSoup as bs
 import requests
-from csv_sum import NLP_summarize as nlpsum
 import csv
+from gensim.summarization import summarize
+from pysummarization.nlpbase.auto_abstractor import AutoAbstractor
+from pysummarization.tokenizabledoc.simple_tokenizer import SimpleTokenizer
+from pysummarization.abstractabledoc.top_n_rank_abstractor import TopNRankAbstractor
 
-def multiscrape():
-    Url1 = "https://clinicaltrials.gov/ct2/show/study/NCT04710615?draw=2"
-    Url2 = "https://clinicaltrials.gov/ct2/show/NCT04847089?draw=2&rank=2"
-    Url3 = "https://clinicaltrials.gov/ct2/show/NCT04847063?draw=2&rank=4"
-    Url4 = "https://clinicaltrials.gov/ct2/show/NCT04847050?draw=2&rank=5"
-    Url5 = "https://clinicaltrials.gov/ct2/show/NCT04847037?draw=2&rank=6"
-    Url6 = "https://clinicaltrials.gov/ct2/show/NCT04847011?draw=2&rank=8"
-    Url7 = "https://clinicaltrials.gov/ct2/show/NCT04846998?draw=2&rank=9"
-    Url8 = "https://clinicaltrials.gov/ct2/show/NCT04846985?draw=2&rank=10"
-    Url9 = "https://clinicaltrials.gov/ct2/show/NCT04846946?draw=2&rank=13"
-    Url10 = "https://clinicaltrials.gov/ct2/show/NCT04846933?draw=2&rank=14"
-    Url11 = "https://clinicaltrials.gov/ct2/show/NCT04846907?draw=2&rank=16"
-    Url12 = "https://clinicaltrials.gov/ct2/show/NCT04846855?draw=2&rank=20"
-    Url13 = "https://clinicaltrials.gov/ct2/show/NCT04846842?draw=2&rank=21"
-    Url14 = "https://clinicaltrials.gov/ct2/show/NCT04846816?draw=2&rank=23"
-    Url15 = "https://clinicaltrials.gov/ct2/show/NCT04846803?draw=2&rank=24"
+class scrape_sum:
+    def __init__(self):
+        pass
+    
+    # Urls to be scraped
+    def URLS(self):
+        Url1 = "https://clinicaltrials.gov/ct2/show/study/NCT04710615?draw=2"
+        Url2 = "https://clinicaltrials.gov/ct2/show/NCT04847089?draw=2&rank=2"
+        Url3 = "https://clinicaltrials.gov/ct2/show/NCT04847063?draw=2&rank=4"
+        Url4 = "https://clinicaltrials.gov/ct2/show/NCT04847050?draw=2&rank=5"
+        Url5 = "https://clinicaltrials.gov/ct2/show/NCT04847037?draw=2&rank=6"
+        Url6 = "https://clinicaltrials.gov/ct2/show/NCT04847011?draw=2&rank=8"
+        Url7 = "https://clinicaltrials.gov/ct2/show/NCT04846998?draw=2&rank=9"
+        Url8 = "https://clinicaltrials.gov/ct2/show/NCT04846985?draw=2&rank=10"
+        Url9 = "https://clinicaltrials.gov/ct2/show/NCT04846946?draw=2&rank=13"
+        Url10 = "https://clinicaltrials.gov/ct2/show/NCT04846933?draw=2&rank=14"
+        Url11 = "https://clinicaltrials.gov/ct2/show/NCT04846907?draw=2&rank=16"
+        Url12 = "https://clinicaltrials.gov/ct2/show/NCT04846855?draw=2&rank=20"
+        Url13 = "https://clinicaltrials.gov/ct2/show/NCT04846842?draw=2&rank=21"
+        Url14 = "https://clinicaltrials.gov/ct2/show/NCT04846816?draw=2&rank=23"
+        Url15 = "https://clinicaltrials.gov/ct2/show/NCT04846803?draw=2&rank=24"
 
-
-    Urls = [Url1, Url2, Url3, Url4, Url5, Url6, Url7, Url8, Url9, Url10, Url11, Url12, Url13, Url14, Url15]
-    summ = []
-    nlpsumm = []
-    detsum = []
-    nlpdetsum = []
-    nctids = [
+        Urls = [Url1, Url2, Url3, Url4, Url5, Url6, Url7, Url8, Url9, Url10, Url11, Url12, Url13, Url14, Url15]
+        return Urls
+   
+   
+   
+   # ids from Urls
+    def ids(self):
+        id = [
         'NCT04710615',
         'NCT04847089',
         'NCT04847063',
@@ -42,34 +51,77 @@ def multiscrape():
         'NCT04846842',
         'NCT04846816',
         'NCT04846803'
-    ]
-    for url in range(len(Urls)):
-        print('.', end='')
-        results = requests.get(Urls[url])
-        soup = bs(results.content, 'html.parser')
-        details = soup.find_all('div', attrs={'class_', 'tr-indent2'})
-        for index, detail in enumerate(details):
-            if index == 1:
-                summary = detail.find_all('div', attrs={'class_', 'ct-body3 tr-indent2'})
-                if summary is not None:
-                    summ.append(summary[0].get_text())
-                    detsum.append(summary[1].get_text())
-                    nlpsumm.append(nlpsum(summary[0].get_text()))
-                    nlpdetsum.append(nlpsum(summary[1].get_text()))                    
-                
+        ]
+        return id    
+    
+    
+    def scrape_csv(self):
+        Urls = scrape_sum().URLS()
+        summ = []
+        nlpsumm = []
+        detsum = []
+        nlpdetsum = []
+        nctids = scrape_sum().ids()
+
+        # loop through list
+        for url in range(len(Urls)):
+            # load current page content
+            results = requests.get(Urls[url])
+            # convert into a beautiful soup object
+            soup = bs(results.content, 'html.parser')
+            details = soup.find_all('div', attrs={'class_', 'tr-indent2'})
+            # loop through to find wanted data
+            for index, detail in enumerate(details):
+                if index == 1:
+                    summary = detail.find_all('div', attrs={'class_', 'ct-body3 tr-indent2'})
+                    if summary is not None:
+                        summ.append(summary[0].get_text())
+                        detsum.append(summary[1].get_text())
+                        nlpsumm.append(scrape_sum().NLP_summarize(summary[0].get_text()))
+                        nlpdetsum.append(scrape_sum().NLP_summarize(summary[1].get_text()))                    
+                    
+                    else:
+                        pass
                 else:
                     pass
-            else:
-                pass      
-    with open('csv_file.csv', mode='w', newline='') as csv_file:
-        fieldnames = ['NCTID', 'short description', 'detailed description', 'summary of short description', 'summary of detailed description']
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-        writer.writeheader()
-        for i in range(0,15):
-            writer.writerow({'NCTID': nctids[i], 'short description': summ[i], 'detailed description': detsum[i], 'summary of short description': nlpsum(summ[i]), 'summary of detailed description': nlpsum(detsum[i])})
+
+        # write scraped data to csv file
+        with open('csv_file.csv', mode='w', newline='') as csv_file:
+            fieldnames = ['NCTID', 'short description', 'detailed description', 'summary of short description', 'summary of detailed description']
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            for i in range(len(Urls)):
+                writer.writerow({'NCTID': nctids[i], 'short description': summ[i], 'detailed description': detsum[i], 'summary of short description': nlpsumm[i], 'summary of detailed description': nlpdetsum[i]})             
     
     
+    # gtech summarize function
+    def NLP_summarize(self, description: str):
+
+        # Object of automatic summarization.
+        auto_abstractor = AutoAbstractor()
+        # Set tokenizer.
+        auto_abstractor.tokenizable_doc = SimpleTokenizer()
+        # Set delimiter for making a list of sentence.
+        auto_abstractor.delimiter_list = [".", "\n"]
+        # Object of abstracting and filtering document.
+        abstractable_doc = TopNRankAbstractor()
+        # Summarize document.
+        result_dict = auto_abstractor.summarize(description, abstractable_doc)
+        '''commented out print statement in gtech's original function
+        print(result_dict)
+        print()
+        '''
+        # Output result. Find sentence with the maximum score value
+        maxi = [0, 0]
+        for result in result_dict["scoring_data"]:
+            if maxi[1] < result[1]:
+                maxi = result
+
+        if maxi[0] < len(result_dict["summarize_result"]):
+            return result_dict["summarize_result"][maxi[0]]
+        else:
+            return None
 
 
 if __name__ == "__main__":
-    multiscrape()
+    scrape_sum().scrape_csv()
